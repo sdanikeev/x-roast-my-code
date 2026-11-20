@@ -151,3 +151,27 @@ describe('LlmClient.chatJson', () => {
     await expect(make({ GROQ_API_KEY: 'k' }).chatJson(MSGS, SCHEMA, 0)).rejects.toMatchObject({ status: 502 });
   });
 });
+
+describe('LlmClient.chatJson streaming', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  const sse = (parts: string[]) =>
+    new Response(
+      parts.map((p) => `data: ${JSON.stringify({ choices: [{ delta: { content: p } }] })}\n\n`).join('') + 'data: [DONE]\n\n',
+      { status: 200 },
+    );
+
+  it('asks for stream:true, reports the growing text and returns the parsed JSON', async () => {
+    const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(sse(['{"a"', ':', '1}']));
+    const seen: string[] = [];
+    await expect(make({ GROQ_API_KEY: 'k' }).chatJson(MSGS, SCHEMA, 0.3, undefined, undefined, (t) => seen.push(t))).resolves.toEqual({ a: 1 });
+    expect(JSON.parse((spy.mock.calls[0][1] as RequestInit).body as string).stream).toBe(true);
+    expect(seen).toEqual(['{"a"', '{"a":', '{"a":1}']);
+  });
+
+  it('a provider error in the middle of the stream is a 502, not a hang', async () => {
+    const body = `data: ${JSON.stringify({ choices: [{ delta: { content: '{' } }] })}\n\ndata: {"error":{"message":"boom"}}\n\n`;
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(body, { status: 200 }));
+    await expect(make({ GROQ_API_KEY: 'k' }).chatJson(MSGS, SCHEMA, 0, undefined, undefined, () => {})).rejects.toMatchObject({ status: 502 });
+  });
+});

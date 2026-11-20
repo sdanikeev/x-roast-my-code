@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Button, Eyebrow, Heading, Loading, Panel, Segmented } from "@/components/ui";
 import { useI18n } from "@/components/i18n/i18n-provider";
 import type { MessageKey } from "@/lib/i18n/messages";
-import { roast, roastErrorKey, TOXICITY, type RoastResult, type Toxicity } from "@/lib/roast";
+import { applyLive, emptyLive, liveAsResult, roastErrorKey, roastStream, TOXICITY, type RoastResult, type Toxicity } from "@/lib/roast";
 import { CodePane } from "./code-pane";
 import { Findings } from "./findings";
 
@@ -16,16 +16,37 @@ export function Roaster() {
   const [result, setResult] = useState<RoastResult>();
   const [error, setError] = useState<MessageKey>();
   const [pending, setPending] = useState(false);
+  const [stage, setStage] = useState<"analyzing" | "roasting">();
+  const [live, setLive] = useState(emptyLive); // flagged lines and the roast text as it is being written
+  const abort = useRef<AbortController>(undefined);
 
-  const flagged = useMemo(() => new Set(result?.findings.map((f) => f.line)), [result]);
+  const flagged = useMemo(() => new Set((result ? result.findings : live.facts).map((f) => f.line)), [result, live.facts]);
+  const liveResult = useMemo(() => liveAsResult(live), [live]);
+  const streaming = pending && live.facts.length > 0;
 
   async function run() {
+    abort.current?.abort();
+    const ctrl = (abort.current = new AbortController());
     setPending(true);
     setError(undefined);
-    const res = await roast({ code, filename, toxicity, language });
-    setPending(false);
-    if (res.ok) setResult(res.data as RoastResult);
-    else setError(roastErrorKey(res.error));
+    setStage(undefined);
+    setLive(emptyLive());
+    try {
+      for await (const ev of roastStream({ code, filename, toxicity, language }, ctrl.signal)) {
+        if (ev.type === "result") setResult(ev.result);
+        else {
+          if (ev.type === "stage") setStage(ev.stage);
+          setLive((l) => applyLive(l, ev));
+        }
+      }
+    } catch (e) {
+      if (!ctrl.signal.aborted) setError(roastErrorKey(e));
+    } finally {
+      if (abort.current === ctrl) {
+        setPending(false);
+        setStage(undefined);
+      }
+    }
   }
 
   return (
@@ -58,7 +79,7 @@ export function Roaster() {
         </div>
         <div className="flex flex-wrap">
           <div className="min-w-0 flex-[1_1_420px] border-r border-line-soft">
-            {result ? (
+            {result || streaming ? (
               <CodePane code={code} flagged={flagged} />
             ) : (
               <textarea
@@ -75,23 +96,16 @@ export function Roaster() {
             <div className="wrap-anywhere text-accent">
               $ roast {filename} --toxicity={toxicity} --lang={language}
             </div>
+            {(result || streaming) && <Findings result={result ?? liveResult} animate />}
             {result ? (
-              <>
-                <Findings result={result} />
-                <Button variant="ghost" className="self-start" onClick={() => setResult(undefined)}>
-                  {t("roaster.edit")}
-                </Button>
-              </>
+              <Button variant="ghost" className="self-start" onClick={() => setResult(undefined)}>
+                {t("roaster.edit")}
+              </Button>
             ) : (
               <>
-                <Loading>{t("roaster.waiting")}</Loading>
+                <Loading>{stage ? t(`roaster.stage.${stage}`) : t("roaster.waiting")}</Loading>
                 {error && <div className="text-crit">{t(error)}</div>}
-                <Button
-                  variant="outline"
-                  className="self-start"
-                  onClick={run}
-                  disabled={pending || !code.trim()}
-                >
+                <Button variant="outline" className="self-start" onClick={run} disabled={pending || !code.trim()}>
                   {pending ? t("roaster.running") : t("roaster.run")}
                 </Button>
               </>
