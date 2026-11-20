@@ -178,6 +178,18 @@ generations (502) on gpt-oss; left off.
 - `npm` here is v12: `-ws` is invalid, use `--workspaces`. Install scripts are blocked (fsevents warning is harmless).
 - React StrictMode double-runs effects: refresh is single-flight (`inflight`) because refresh tokens are single-use; a login
   that finishes while the initial refresh is in flight wins (`session.gen`).
+- **SSE facts (`@x-requests/core` 0.5.0, read from its README and `dist/XRequest.js`)**: `.stream()` JSON-parses `data`
+  unless `.stream({ json: false })`. `.timeout(ms)` covers only the wait for the connection, not the whole stream. After a
+  failure it reconnects with `Last-Event-ID` and the server's `retry:` hint, under the same rule as POST: a POST reconnects
+  only with `.idempotent()`. So the roast stream has no `.retries()` (a reconnect would re-run the LLM). A stream the server
+  closes normally just ends. A fetcher without `stream()` throws `ValidationError`.
+- **LLM streams can fail inside a 200**: OpenAI-style `data: {"error": ...}` arrives after the status line. `llm.client.ts`
+  maps that to a 502. Text deltas are `choices[0].delta.content`; the stream ends with `data: [DONE]`.
+- **Roaster output order matters for the UI**: the roaster schema lists `items` before `verdict`, and `ground()` sorts
+  facts by line, so the answer streams top to bottom. The `FORBIDDEN` regex also guards the streamed text
+  (`stream-text.ts` holds back 24 chars of an unfinished string).
+- **Buffering**: the `/api` Next rewrite may buffer SSE. The backend sends `Cache-Control: no-transform` and
+  `X-Accel-Buffering: no`. Check the live stream in a browser; a unit test cannot show buffering.
 - Other projects' containers on this machine held 5432/6379/3000 (`postgres_18`, `redis_8`, `api_gateway`); they were
   stopped (`docker start ...` brings them back, but then ports conflict with this stack).
 
