@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # Build context is the repo root:
 #   docker build -f frontend/Dockerfile --target prod --build-arg BACKEND_URL=http://backend:4000 .
-FROM node:24-alpine AS base
+FROM node:26-alpine AS base
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY frontend/package.json frontend/
@@ -22,7 +22,7 @@ COPY frontend frontend
 RUN npm run build -w frontend
 
 # ---------- prod: Next.js standalone output ----------
-FROM node:24-alpine AS prod
+FROM node:26-alpine AS prod
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0
 WORKDIR /app
 # standalone keeps the monorepo layout: /app/frontend/server.js + traced node_modules
