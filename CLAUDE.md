@@ -5,7 +5,7 @@ AI code reviewer with zero patience. Users sign in (email/password or GitHub), p
 with a correct fix per finding.
 
 Monorepo (npm workspaces): `backend/` NestJS 12 (ESM) · `frontend/` Next.js 16 + React 19 + Tailwind 4 ·
-Postgres 17 · Redis 7 · everything runs in Docker Compose. Not a git repo yet (run `git init` before using CI).
+Postgres 17 · Redis 7 · everything runs in Docker Compose. Git repo on branch `main` (no remote yet). After cloning run `make install env hooks`.
 
 ## Commands (use the Makefile; `make help` lists everything)
 
@@ -19,6 +19,8 @@ Postgres 17 · Redis 7 · everything runs in Docker Compose. Not a git repo yet 
 | `make check` | lint + typecheck + unit tests (fast gate) |
 | `make test-e2e` | backend e2e against real Postgres + Redis (starts infra first) |
 | `make ci` | everything CI runs except the docker job |
+| `make hooks` | enable the pre-commit secret scan (`git config core.hooksPath .githooks`) |
+| `make secrets-check` | scan all tracked files for secrets |
 | `make psql` / `make redis-cli` | shells into the containers |
 
 URLs: frontend <http://localhost:3000>, backend <http://localhost:4000> (`/health`). Browsers talk to the backend
@@ -124,6 +126,17 @@ generations (502) on gpt-oss; left off.
   (register + refresh). Dependabot for npm/docker/actions.
 - Security-critical paths have dedicated tests (rotation grace/reuse, revocation, throttle, OAuth linking, CSRF, grounding,
   safety filter). An Opus review was run over the whole project; its findings were fixed (see git history/this file).
+
+## Secrets policy (never commit them)
+
+- Real env files (`.env`, `backend/.env`, `frontend/.env.local`) are git-ignored; only `*.example` templates are tracked
+  (note `frontend/.gitignore` has `!.env.example` so its template is not swallowed by `.env*`).
+- `scripts/check-secrets.sh` runs as the **pre-commit hook** (`.githooks/`, enable with `make hooks`), in `make check`, and as the
+  first CI job (`--all`). It blocks: secret-bearing file names (`.env*`, `*.pem`, `*.key`...), known token formats (Groq `gsk_`,
+  GitHub `ghp_`/`github_pat_`, `sk-`, AWS, Slack, private keys, JWTs), dotenv-style `NAME_SECRET=value` lines, and any
+  **literal value copied from your local env files**. It never prints the secret, only `file:line` + the rule. A deliberate
+  false positive can carry the marker `secrets-ok`. Do not bypass with `--no-verify`.
+- If a secret ever lands in git: rotate it first (Groq/GitHub dashboards, regenerate JWT secrets), then rewrite history.
 
 ## Docker
 
