@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # Build context is the repo root (npm workspaces share one lockfile):
 #   docker build -f backend/Dockerfile --target prod .
-FROM node:24-alpine AS base
+FROM node:26-alpine AS base
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY backend/package.json backend/
@@ -23,7 +23,7 @@ FROM base AS prod-deps
 RUN --mount=type=cache,target=/root/.npm npm ci -w backend --omit=dev --include-workspace-root
 
 # ---------- prod ----------
-FROM node:24-alpine AS prod
+FROM node:26-alpine AS prod
 ENV NODE_ENV=production PORT=4000
 # prod-deps holds the workspace layout: hoisted /app/node_modules (+ any nested ones) and package.json files
 COPY --from=prod-deps --chown=node:node /app /app
