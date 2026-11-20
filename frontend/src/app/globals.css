@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+/* roast.sh design tokens (from the "roast.sh" design canvas) */
+@theme {
+  --color-bg: #0a0b0a;
+  --color-surface: #0d0f0d;
+  --color-surface-2: #101310;
+  --color-line: #243026;
+  --color-line-soft: #1a221b;
+  --color-fg: #e8efe9;
+  --color-code: #cfd9d1;
+  --color-muted: #9aa59b;
+  --color-dim: #7b887d;
+  --color-accent: #7cff8a;
+  --color-crit: #ff6b5e;
+  --color-warn: #ffd166;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, Menlo, monospace;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.cursor {
+  display: inline-block;
+  width: 9px;
+  height: 1.1em;
+  vertical-align: text-bottom;
+  animation: blink 1.1s steps(1) infinite;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}

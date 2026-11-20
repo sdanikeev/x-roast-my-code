@@ -1,0 +1,16 @@
+node_modules
+dist
+.next
+coverage
+*.log
+*.tsbuildinfo
+.DS_Store
+
+# secrets: real env files never go to git, only the *.example templates
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+credentials.json

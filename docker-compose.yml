@@ -1,0 +1,86 @@
+# Production-like stack: postgres + redis + backend + frontend (built images, no hot reload).
+#   make up            -> this file
+#   make dev           -> this file + docker-compose.dev.yml (hot reload)
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app}
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432" # host-only: never expose the database to the network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-app} -d ${POSTGRES_DB:-app}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379" # host-only: Redis holds the token revocation lists and has no auth
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: prod
+    restart: unless-stopped
+    env_file:
+      - path: backend/.env # JWT secrets, GitHub OAuth keys, ...
+        required: false
+    environment:
+      # service names + container ports win over whatever backend/.env says for host-side tooling
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: ${POSTGRES_USER:-app}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-app}
+      DB_NAME: ${POSTGRES_DB:-app}
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      # only used with LLM_PROVIDER=ollama (ollama runs on the host, not in compose): reach it via the host gateway
+      OLLAMA_URL: ${OLLAMA_URL:-http://host.docker.internal:11434}
+      # No migrations yet. Turn this off and run migrations for a real deployment.
+      DB_SYNCHRONIZE: ${DB_SYNCHRONIZE:-true}
+      # false lets the stack work over plain http://localhost. Set COOKIE_SECURE=true when serving over https.
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # already built in on Docker Desktop; needed on Linux
+    ports:
+      - "127.0.0.1:${BACKEND_PORT:-4000}:4000" # debugging only; browsers go through the frontend /api proxy
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      target: prod
+      args:
+        BACKEND_URL: http://backend:4000
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:
