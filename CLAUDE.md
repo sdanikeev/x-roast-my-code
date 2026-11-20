@@ -39,7 +39,9 @@ backend/src/
 backend/test/           auth.e2e-spec.ts  (real DB/Redis; the LLM is mocked via overrideProvider(LlmClient))
 frontend/src/
   app/                  /, /login, /register, /roaster, /auth/callback (OAuth landing)
-  components/ui/        design system primitives (Button, Field, Panel, SeverityTag, Segmented, Cursor, Logo)
+  components/ui/        design system primitives (Button/ButtonLink + buttonStyles, Field, Form, Page, PageHeader, Eyebrow,
+                        Heading, Loading, TextLink, Panel, SeverityTag, Segmented, Cursor, Logo). Use these + the
+                        `@theme` tokens (text-caption, min-h-touch, max-w-page…) instead of ad-hoc class strings.
   components/auth/      AuthProvider (session context), forms, GithubButton, RequireAuth, UserMenu
   components/roaster/   Roaster, CodePane, Findings
   lib/api.ts            @x-requests/core clients + in-memory session + single-flight refresh
@@ -126,6 +128,20 @@ generations (502) on gpt-oss; left off.
   (register + refresh). Dependabot for npm/docker/actions.
 - Security-critical paths have dedicated tests (rotation grace/reuse, revocation, throttle, OAuth linking, CSRF, grounding,
   safety filter). An Opus review was run over the whole project; its findings were fixed (see git history/this file).
+
+## Git workflow (gitflow)
+
+- Branches: `main` is always releasable; work happens in short-lived `feat/…`, `fix/…`, `chore/…`, `refactor/…` branches
+  and lands via PR. No direct pushes to `main`.
+- **Commit format**: `<type>: <what we did>` — one line, imperative, lower-case, no trailing period.
+  Types: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`, `style`, `perf`, `build`, `ci`.
+  Example: `refactor: extract shared Page/Form/ButtonLink ui components`.
+- **No commit body**: the description stays empty. Everything goes in the subject line (keep it ≲ 72 chars);
+  the only allowed extra lines are the attribution trailers added by tooling.
+- One logical change per commit; don't mix refactors with features/fixes.
+- **Before every push** run the same gates CI runs and push only if all are green:
+  `make ci` (secrets-check + lint + typecheck + unit tests + e2e + app builds). If infra for e2e isn't up,
+  at minimum `make check` (lint, types, tests) must pass. If anything fails: fix it, don't push, never use `--no-verify`.
 
 ## Secrets policy (never commit them)
 
