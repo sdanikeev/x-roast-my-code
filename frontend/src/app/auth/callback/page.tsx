@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loading, Page, TextLink } from "@/components/ui";
+import { useT } from "@/components/i18n/i18n-provider";
 import { useAuth } from "@/components/auth/auth-provider";
 import { session } from "@/lib/api";
 
@@ -10,6 +11,7 @@ import { session } from "@/lib/api";
 export default function OAuthCallbackPage() {
   const { status } = useAuth();
   const router = useRouter();
+  const t = useT();
 
   useEffect(() => {
     if (status === "authed") router.replace("/roaster");
@@ -18,21 +20,19 @@ export default function OAuthCallbackPage() {
   if (status === "anon") {
     return (
       <Page width="narrow" className="gap-4 py-0 text-sm">
-        <h1 className="text-xl font-bold text-crit">github sign-in failed</h1>
-        <p className="text-muted">
-          GitHub accepted you, but this browser could not start a session.
-        </p>
+        <h1 className="text-xl font-bold text-crit">{t("callback.title")}</h1>
+        <p className="text-muted">{t("callback.body")}</p>
         <pre className="overflow-x-auto rounded-sm border border-line bg-surface p-3 text-code whitespace-pre-wrap">
-          {session.lastRefreshError ?? "no session cookie was accepted"}
+          {session.lastRefreshError ?? t("callback.noCookie")}
         </pre>
-        <TextLink href="/login">back to login</TextLink>
+        <TextLink href="/login">{t("callback.back")}</TextLink>
       </Page>
     );
   }
 
   return (
     <Page width="narrow" className="items-center py-0">
-      <Loading>signing you in</Loading>
+      <Loading>{t("callback.signingIn")}</Loading>
     </Page>
   );
 }

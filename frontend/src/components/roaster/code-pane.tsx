@@ -1,9 +1,13 @@
+"use client";
+
+import { useT } from "@/components/i18n/i18n-provider";
 import { cn } from "@/lib/cn";
 
 export function CodePane({ code, flagged }: { code: string; flagged: Set<number> }) {
+  const t = useT();
   const lines = code.split("\n");
   return (
-    <div className="overflow-x-auto py-5" aria-label="code under review">
+    <div className="overflow-x-auto py-5" aria-label={t("roaster.codeUnderReview")}>
       {lines.map((text, i) => (
         <div
           key={i}

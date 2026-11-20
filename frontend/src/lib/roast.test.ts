@@ -1,17 +1,19 @@
 import { HttpError } from "@x-requests/core";
 import { describe, expect, it } from "vitest";
-import { roastErrorMessage } from "./roast";
+import { MESSAGES } from "./i18n/messages";
+import { roastErrorKey } from "./roast";
 
-describe("roastErrorMessage", () => {
+describe("roastErrorKey", () => {
   const err = (status: number) => new HttpError(status, "{}", {});
+  const en = (e: unknown) => MESSAGES.en[roastErrorKey(e)];
 
   it("explains rate limits, offline model and bad input", () => {
-    expect(roastErrorMessage(err(429))).toMatch(/slow down/);
-    expect(roastErrorMessage(err(503))).toMatch(/offline/);
-    expect(roastErrorMessage(err(400))).toMatch(/12000/);
+    expect(en(err(429))).toMatch(/slow down/);
+    expect(en(err(503))).toMatch(/offline/);
+    expect(en(err(400))).toMatch(/12000/);
   });
 
   it("falls back for anything else", () => {
-    expect(roastErrorMessage(new Error("boom"))).toMatch(/failed/);
+    expect(en(new Error("boom"))).toMatch(/failed/);
   });
 });

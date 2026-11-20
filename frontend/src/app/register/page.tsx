@@ -6,9 +6,9 @@ import { RegisterForm } from "@/components/auth/register-form";
 export default function RegisterPage() {
   return (
     <AuthShell
-      eyebrow="// toxic to the code. never to you."
-      title="Pick your victim."
-      footer={{ text: "already registered?", href: "/login", link: "log in" }}
+      eyebrow="register.eyebrow"
+      title="register.title"
+      footer={{ text: "register.footerText", href: "/login", link: "register.footerLink" }}
     >
       <GithubButton />
       <OrDivider />

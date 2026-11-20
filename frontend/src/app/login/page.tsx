@@ -6,9 +6,9 @@ import { LoginForm } from "@/components/auth/login-form";
 export default function LoginPage() {
   return (
     <AuthShell
-      eyebrow="// welcome back. your code missed you."
-      title="Log in."
-      footer={{ text: "no account yet?", href: "/register", link: "register" }}
+      eyebrow="login.eyebrow"
+      title="login.title"
+      footer={{ text: "login.footerText", href: "/register", link: "login.footerLink" }}
     >
       <GithubButton />
       <OrDivider />

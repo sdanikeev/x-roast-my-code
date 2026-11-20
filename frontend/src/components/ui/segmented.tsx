@@ -7,11 +7,13 @@ export function Segmented<T extends string>({
   options,
   value,
   onChange,
+  format = (o) => o,
 }: {
   label: string;
   options: readonly T[];
   value: T;
   onChange: (v: T) => void;
+  format?: (v: T) => string;
 }) {
   return (
     <div role="group" aria-label={label} className="flex flex-wrap items-center gap-2">
@@ -25,7 +27,7 @@ export function Segmented<T extends string>({
           aria-pressed={o === value}
           onClick={() => onChange(o)}
         >
-          {o}
+          {format(o)}
         </Button>
       ))}
     </div>
