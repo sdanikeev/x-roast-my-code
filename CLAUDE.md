@@ -43,7 +43,9 @@ frontend/src/
                         Heading, Loading, TextLink, Panel, SeverityTag, Segmented, Cursor, Logo). Use these + the
                         `@theme` tokens (text-caption, min-h-touch, max-w-page…) instead of ad-hoc class strings.
   components/auth/      AuthProvider (session context), forms, GithubButton, RequireAuth, UserMenu
-  components/roaster/   Roaster, CodePane, Findings
+  components/roaster/   Roaster, CodeEditor (CodeMirror 6), Findings; editor/ = language by filename (JS/TS/Python/Java/C++/Go),
+                        theme, flagged-line decorations, language detection on paste. After adding a dependency run `make dev`
+                        (it renews the anonymous node_modules volume), otherwise the dev container misses the package.
   lib/api.ts            @x-requests/core clients + in-memory session + single-flight refresh
   lib/auth.ts, roast.ts auth calls, /roast call + error messages
 ```

@@ -1,17 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
-import { CodePane } from "./code-pane";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it, vi } from "vitest";
 import { Findings } from "./findings";
-
-describe("CodePane", () => {
-  it("numbers lines and highlights flagged ones", () => {
-    const { container } = render(<CodePane code={"a\nb\nc"} flagged={new Set([2])} />);
-    expect(screen.getByText("3")).toBeInTheDocument();
-    const rows = container.querySelectorAll("div.flex");
-    expect(rows[1].className).toContain("bg-crit/15");
-    expect(rows[0].className).not.toContain("bg-crit/15");
-  });
-});
 
 describe("Findings", () => {
   it("lists findings and the verdict", () => {
@@ -31,6 +21,22 @@ describe("Findings", () => {
     expect(screen.getByText("always null")).toBeInTheDocument();
     expect(screen.getByText("verdict: 2/10")).toBeInTheDocument();
     expect(screen.getByText("Burn it down.")).toBeInTheDocument();
+  });
+});
+
+describe("Findings (onSelect)", () => {
+  const result = { score: "2/10", verdict: "v", findings: [{ line: 6, sev: "CRIT" as const, text: "always null" }] };
+
+  it("makes the finding header a button that reports its line", async () => {
+    const onSelect = vi.fn();
+    render(<Findings result={result} onSelect={onSelect} />);
+    await userEvent.click(screen.getByRole("button", { name: /line 6/ }));
+    expect(onSelect).toHaveBeenCalledWith(6);
+  });
+
+  it("has no buttons without onSelect", () => {
+    render(<Findings result={result} />);
+    expect(screen.queryByRole("button")).toBeNull();
   });
 });
 
