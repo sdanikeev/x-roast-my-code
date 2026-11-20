@@ -69,7 +69,15 @@ export class LlmClient {
   }
 
   /** One chat completion that must come back as a JSON object. Errors are mapped to HTTP exceptions. */
-  async chatJson(messages: ChatMessage[], schema: object, temperature: number, model?: string, effort?: string): Promise<unknown> {
+  async chatJson(
+    messages: ChatMessage[],
+    schema: object,
+    temperature: number,
+    model?: string,
+    effort?: string,
+    /** If given, the answer is requested with `stream: true` and this gets the text accumulated so far on every chunk. */
+    onContent?: (accumulated: string) => void,
+  ): Promise<unknown> {
     if (!this.provider || !this.baseUrl || !this.model) throw new ServiceUnavailableException('the reviewer is not configured');
 
     for (let attempt = 0; attempt < 4; attempt++) {
@@ -78,7 +86,7 @@ export class LlmClient {
         res = await fetch(`${this.baseUrl}/chat/completions`, {
           method: 'POST',
           headers: { 'content-type': 'application/json', ...(this.apiKey ? { authorization: `Bearer ${this.apiKey}` } : {}) },
-          body: JSON.stringify(this.body(messages, schema, temperature, model, effort)),
+          body: JSON.stringify(this.body(messages, schema, temperature, model, effort, !!onContent)),
           signal: AbortSignal.timeout(this.timeoutMs),
         });
       } catch (e) {
@@ -86,7 +94,10 @@ export class LlmClient {
         throw new ServiceUnavailableException('the reviewer is unavailable');
       }
 
-      if (res.ok) return this.parse(await res.json().catch(() => undefined));
+      if (res.ok) {
+        if (!onContent) return this.parse(await res.json().catch(() => undefined));
+        return this.parseText(await this.readStream(res, onContent));
+      }
 
       const raw = await res.text().catch(() => '');
       const detail = raw.slice(0, 300);
@@ -129,8 +140,53 @@ export class LlmClient {
     throw new BadGatewayException('the reviewer failed');
   }
 
-  private body(messages: ChatMessage[], schema: object, temperature: number, model?: string, effort?: string) {
-    const body: Record<string, unknown> = { model: model || this.model, temperature, stream: false };
+  /** Reads an OpenAI-style SSE body (`data: {choices:[{delta:{content}}]}` ... `data: [DONE]`) into the full text. */
+  private async readStream(res: Response, onContent: (accumulated: string) => void): Promise<string> {
+    let text = '';
+    let buffer = '';
+    const decoder = new TextDecoder();
+    const handle = (line: string): boolean => {
+      if (!line.startsWith('data:')) return false;
+      const data = line.slice(5).trim();
+      if (data === '[DONE]') return true;
+      let chunk: { choices?: { delta?: { content?: string | null } }[]; error?: unknown };
+      try {
+        chunk = JSON.parse(data);
+      } catch {
+        return false;
+      }
+      if (chunk.error) {
+        this.log.warn(`${this.provider} failed mid-stream: ${JSON.stringify(chunk.error).slice(0, 300)}`);
+        throw new BadGatewayException('the reviewer failed');
+      }
+      const delta = chunk.choices?.[0]?.delta?.content;
+      if (delta) {
+        text += delta;
+        onContent(text);
+      }
+      return false;
+    };
+    try {
+      for await (const part of res.body as unknown as AsyncIterable<Uint8Array>) {
+        buffer += decoder.decode(part, { stream: true });
+        let nl: number;
+        while ((nl = buffer.indexOf('\n')) >= 0) {
+          const line = buffer.slice(0, nl).replace(/\r$/, '');
+          buffer = buffer.slice(nl + 1);
+          if (handle(line)) return text;
+        }
+      }
+      handle(buffer.trim());
+    } catch (e) {
+      if (e instanceof BadGatewayException) throw e;
+      this.log.warn(`${this.provider} stream broke: ${(e as Error).message}`);
+      throw new BadGatewayException('the reviewer failed');
+    }
+    return text;
+  }
+
+  private body(messages: ChatMessage[], schema: object, temperature: number, model?: string, effort?: string, stream = false) {
+    const body: Record<string, unknown> = { model: model || this.model, temperature, stream };
     if (effort || this.reasoningEffort) body.reasoning_effort = effort || this.reasoningEffort;
 
     if (this.jsonMode === 'json_schema') {
@@ -151,6 +207,10 @@ export class LlmClient {
   private parse(payload: unknown): unknown {
     const content = (payload as { choices?: { message?: { content?: string } }[] } | undefined)?.choices?.[0]?.message?.content;
     if (typeof content !== 'string') throw new BadGatewayException('the reviewer returned an empty answer');
+    return this.parseText(content);
+  }
+
+  private parseText(content: string): unknown {
     const parsed = parseLoose(content);
     if (parsed === undefined) throw new BadGatewayException('the reviewer returned an unreadable answer');
     return parsed;

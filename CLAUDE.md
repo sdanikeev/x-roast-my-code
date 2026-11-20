@@ -85,6 +85,14 @@ crit `#ff6b5e`, warn `#ffd166`; tokens live in `frontend/src/app/globals.css` (`
 `POST /roast {code (<=12000 chars), filename?, toxicity, language?}` (JWT required) ->
 `{score: "N/10", verdict, findings: [{line, sev: CRIT|WARN, text}]}`. `text` contains the roast and `\nfix: ...`.
 
+`POST /roast/stream` is the same pipeline as SSE (what the UI uses): events `stage` {analyzing|roasting}, `facts`
+{lines:[{i,line,sev}]} (flagged lines, sent before the jokes exist so the code pane highlights early), `text`
+{target:i|'verdict', delta} (the roaster pass runs with `stream:true`; `stream-text.ts` pulls the strings out of the
+half-written JSON, holds back the tail and blocks anything matching FORBIDDEN; a repeated `roasting` stage = retry, drop
+the text), then `result` (the verified JSON above, always the truth) or `error` {status}. The stream opens lazily on the first event, so 429/400/401 before any work are still
+plain HTTP errors. Frontend: `roastStream()` in lib/roast.ts via `@x-requests/core` `.stream()`; do NOT add `.retries()`
+(a reconnect would re-run the LLM).
+
 Two LLM passes, because one pass cannot be both a good detective and a good comedian:
 
 1. **Analyst** (temp 0.1, no jokes, English). The schema forces reasoning **before** findings: `intent` (what the code

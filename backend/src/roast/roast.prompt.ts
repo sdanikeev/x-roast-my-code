@@ -134,7 +134,7 @@ export function analystMessages(lines: string[], filename?: string) {
 export const ROASTER_SCHEMA = {
   type: 'object',
   properties: {
-    verdict: { type: 'string' },
+    // items first, verdict last: the model writes in this order and the UI streams it top to bottom
     items: {
       type: 'array',
       items: {
@@ -143,8 +143,9 @@ export const ROASTER_SCHEMA = {
         required: ['i', 'text', 'fix'],
       },
     },
+    verdict: { type: 'string' },
   },
-  required: ['verdict', 'items'],
+  required: ['items', 'verdict'],
 };
 
 const LANG_NAME: Record<Language, string> = { en: 'English', ru: 'Russian' };
@@ -252,7 +253,7 @@ export function roasterMessages(facts: Fact[], score: number, toxicity: Toxicity
   return [
     { role: 'system', content: roasterSystem(toxicity, language) },
     { role: 'user', content: roasterUser(EXAMPLE_FACTS, 2, toxicity, language) },
-    { role: 'assistant', content: JSON.stringify(VOICED[toxicity][language]) },
+    { role: 'assistant', content: JSON.stringify({ items: VOICED[toxicity][language].items, verdict: VOICED[toxicity][language].verdict }) },
     { role: 'user', content: roasterUser(facts, score, toxicity, language) },
   ];
 }

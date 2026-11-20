@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Redis } from 'ioredis';
 import { REDIS } from '../redis/redis.module.js';
 import { LlmClient } from './llm.client.js';
+import { RoastTextStreamer } from './stream-text.js';
 import type { Finding, Language, RoastResult, Toxicity } from './roast.dto.js';
 import {
   ANALYST_SCHEMA,
@@ -12,6 +13,13 @@ import {
   roasterMessages,
   type Fact,
 } from './roast.prompt.js';
+
+/** Progress of one roast, in the order it happens. `facts` carries only line numbers: the jokes come later. */
+export type RoastProgress =
+  | { type: 'stage'; stage: 'analyzing' | 'roasting' }
+  | { type: 'facts'; lines: { i: number; line: number; sev: Finding['sev'] }[] }
+  /** A piece of roast text as the model writes it. `target` is a fact index (`i` in `facts`) or the verdict. Unverified: `result` is the truth. */
+  | { type: 'text'; target: number | 'verdict'; delta: string };
 
 @Injectable()
 export class RoastService {
@@ -35,6 +43,7 @@ export class RoastService {
     filename: string | undefined,
     toxicity: Toxicity,
     language: Language = 'en',
+    onProgress: (e: RoastProgress) => void = () => {},
   ): Promise<RoastResult> {
     await this.enforceRateLimit(userId);
     if (this.inFlight >= this.maxConcurrent) {
@@ -44,6 +53,7 @@ export class RoastService {
     this.inFlight++;
     try {
       const lines = code.replace(/\r\n?/g, '\n').split('\n');
+      onProgress({ type: 'stage', stage: 'analyzing' });
 
       // pass 1: cold analysis, verified against the real code (a retry if everything was made up)
       let analysis = ground(await this.llm.chatJson(analystMessages(lines, filename), ANALYST_SCHEMA, 0.1, undefined, this.llm.analystEffort), lines);
@@ -55,6 +65,9 @@ export class RoastService {
         return { score: `${analysis.score}/10`, verdict: CLEAN_VERDICT[toxicity][language], findings: [] };
       }
 
+      onProgress({ type: 'facts', lines: analysis.facts.map((f, i) => ({ i, line: f.line, sev: f.sev })) });
+      onProgress({ type: 'stage', stage: 'roasting' });
+
       // pass 2: give the verified facts a voice. Retry once if some facts came back unvoiced; if it keeps
       // misbehaving we fall back to the plain facts rather than failing the request.
       let voiced: unknown;
@@ -62,7 +75,12 @@ export class RoastService {
       const temperature = toxicity === 'nuclear' ? 0.7 : 0.4;
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
-          voiced = await this.llm.chatJson(messages, ROASTER_SCHEMA, temperature, this.llm.roasterModel);
+          // a retry starts the text over: tell the listener (it clears what it has shown)
+          if (attempt > 0) onProgress({ type: 'stage', stage: 'roasting' });
+          const streamer = new RoastTextStreamer(FORBIDDEN, (d) => onProgress({ type: 'text', ...d }));
+          voiced = await this.llm.chatJson(messages, ROASTER_SCHEMA, temperature, this.llm.roasterModel, undefined, (acc) =>
+            streamer.push(acc),
+          );
           if (voicedCount(voiced, analysis.facts.length) === analysis.facts.length) break;
           this.log.warn(`roaster voiced ${voicedCount(voiced, analysis.facts.length)}/${analysis.facts.length} facts`);
         } catch (e) {
@@ -155,6 +173,7 @@ export function ground(raw: unknown, lines: string[]): Analysis {
     });
     if (facts.length === 6) break;
   }
+  facts.sort((a, b) => a.line - b.line); // top to bottom: the roast is then written (and streamed) in reading order
   return { score, facts, dropped };
 }
 
