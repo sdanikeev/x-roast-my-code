@@ -2,7 +2,7 @@
 
 import { useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { Cursor } from "@/components/ui";
+import { Loading } from "@/components/ui";
 import { useAuth } from "./auth-provider";
 
 export function RequireAuth({ children }: { children: ReactNode }) {
@@ -14,12 +14,7 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   }, [status, router]);
 
   if (status !== "authed") {
-    return (
-      <div className="text-muted">
-        authenticating
-        <Cursor className="bg-muted" />
-      </div>
-    );
+    return <Loading>authenticating</Loading>;
   }
   return <>{children}</>;
 }

@@ -9,27 +9,16 @@ export function UserMenu() {
   const router = useRouter();
   if (!user) return null;
   return (
-    <div className="flex flex-wrap items-center gap-3 text-[13px] text-muted">
+    <div className="flex flex-wrap items-center gap-3 text-caption text-muted">
       <span>{user.name ?? user.email}</span>
       <Button
         variant="ghost"
-        className="min-h-11 px-3 py-1.5 text-[13px]"
         onClick={async () => {
           await signOut();
           router.push("/login");
         }}
       >
         logout
-      </Button>
-      <Button
-        variant="ghost"
-        className="min-h-11 px-3 py-1.5 text-[13px]"
-        onClick={async () => {
-          await signOut(true);
-          router.push("/login");
-        }}
-      >
-        logout everywhere
       </Button>
     </div>
   );

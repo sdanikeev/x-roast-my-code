@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/cn";
+import { Button } from "./button";
 
 export function Segmented<T extends string>({
   label,
@@ -15,22 +15,18 @@ export function Segmented<T extends string>({
 }) {
   return (
     <div role="group" aria-label={label} className="flex flex-wrap items-center gap-2">
-      <span className="mr-1 text-[13px] text-muted">{label}</span>
+      <span className="mr-1 text-caption text-muted">{label}</span>
       {options.map((o) => (
-        <button
+        <Button
           key={o}
           type="button"
+          size="sm"
+          variant={o === value ? "primary" : "ghost"}
           aria-pressed={o === value}
           onClick={() => onChange(o)}
-          className={cn(
-            "min-h-11 cursor-pointer rounded-sm border px-3.5 py-2 text-sm",
-            o === value
-              ? "border-accent bg-accent font-bold text-bg"
-              : "border-line bg-transparent text-muted hover:text-fg",
-          )}
         >
           {o}
-        </button>
+        </Button>
       ))}
     </div>
   );
