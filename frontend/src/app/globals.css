@@ -14,6 +14,10 @@
   --color-accent: #7cff8a;
   --color-crit: #ff6b5e;
   --color-warn: #ffd166;
+  /* syntax highlighting only (code editor) */
+  --color-syn-fn: #8fb8ff;
+  --color-syn-type: #c3a6ff;
+  --color-syn-num: #ffb27a;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, Menlo, monospace;
   --radius-sm: 2px;
   --radius-md: 4px;
@@ -43,6 +47,15 @@ body {
   font-family: var(--font-mono);
   font-size: var(--text-body);
   line-height: var(--text-body--line-height);
+}
+
+/* code editor: a line flashes when its finding is clicked (class set by editor/flagged.ts) */
+@keyframes flash-line {
+  from { background-color: rgb(124 255 138 / 0.35); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .cm-flash { animation: flash-line 1.2s ease-out; }
 }
 
 @keyframes blink {

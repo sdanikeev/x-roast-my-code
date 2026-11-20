@@ -3,7 +3,9 @@ import type { Locale, MessageKey } from "@/lib/i18n/messages";
 import { api } from "@/lib/api";
 import type { Severity } from "@/components/ui";
 
-export const TOXICITY = ["mild", "medium", "nuclear"] as const;
+export const MAX_CODE_CHARS = 12_000; // keep in sync with backend/src/roast/roast.dto.ts
+
+export const TOXICITY =["mild", "medium", "nuclear"] as const;
 export type Toxicity = (typeof TOXICITY)[number];
 
 export type Language = Locale; // the UI language is also the language of the roast
