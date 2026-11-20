@@ -17,6 +17,20 @@
   --font-mono: var(--font-jetbrains-mono), ui-monospace, Menlo, monospace;
   --radius-sm: 2px;
   --radius-md: 4px;
+
+  /* typography */
+  --text-caption: 13px;
+  --text-caption--line-height: 1.6;
+  --text-body: 15px;
+  --text-body--line-height: 1.6;
+  --text-display: clamp(34px, 7vw, 72px);
+  --text-display--line-height: 1.05;
+
+  /* layout */
+  --container-page: 1040px;
+  --container-narrow: 28rem;
+  --spacing-page-x: 1.5rem;
+  --spacing-touch: 2.75rem; /* min touch target, 44px */
 }
 
 html {
@@ -27,8 +41,8 @@ body {
   background: var(--color-bg);
   color: var(--color-fg);
   font-family: var(--font-mono);
-  font-size: 15px;
-  line-height: 1.6;
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
 }
 
 @keyframes blink {

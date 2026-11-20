@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Button, Cursor, Panel, Segmented } from "@/components/ui";
+import { Button, Eyebrow, Heading, Loading, Panel, Segmented } from "@/components/ui";
 import { LANGUAGES, roast, roastErrorMessage, TOXICITY, type Language, type RoastResult, type Toxicity } from "@/lib/roast";
 import { CodePane } from "./code-pane";
 import { Findings } from "./findings";
@@ -30,8 +30,8 @@ export function Roaster() {
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <div className="text-[13px] text-muted">{"// paste. take the hit. fix it."}</div>
-          <h1 className="mt-1 text-3xl font-bold">Pick your victim.</h1>
+          <Eyebrow>{"// paste. take the hit. fix it."}</Eyebrow>
+          <Heading className="mt-1">Pick your victim.</Heading>
         </div>
         <div className="flex flex-col items-end gap-2">
           <Segmented label="toxicity" options={TOXICITY} value={toxicity} onChange={setToxicity} />
@@ -41,14 +41,14 @@ export function Roaster() {
 
       <Panel>
         <div className="flex flex-wrap items-center gap-3 border-b border-line bg-surface-2 px-4 py-2">
-          <label htmlFor="filename" className="text-[13px] text-muted">
+          <label htmlFor="filename" className="text-caption text-muted">
             file
           </label>
           <input
             id="filename"
             value={filename}
             onChange={(e) => setFilename(e.target.value)}
-            className="min-h-11 flex-1 border-0 bg-transparent text-accent"
+            className="min-h-touch flex-1 border-0 bg-transparent text-accent"
           />
         </div>
         <div className="flex flex-wrap">
@@ -79,10 +79,7 @@ export function Roaster() {
               </>
             ) : (
               <>
-                <div className="text-muted">
-                  waiting for input
-                  <Cursor className="bg-muted" />
-                </div>
+                <Loading>waiting for input</Loading>
                 {error && <div className="text-crit">{error}</div>}
                 <Button
                   variant="outline"

@@ -10,7 +10,7 @@ export function Field({
   const id = useId();
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-[13px] text-muted">
+      <label htmlFor={id} className="text-caption text-muted">
         {label}
       </label>
       <input
@@ -19,13 +19,13 @@ export function Field({
         aria-describedby={error ? `${id}-err` : undefined}
         {...props}
         className={cn(
-          "min-h-11 w-full rounded-sm border bg-surface px-3.5 py-2.5 text-fg placeholder:text-dim",
+          "min-h-touch w-full rounded-sm border bg-surface px-3.5 py-2.5 text-fg placeholder:text-dim",
           error ? "border-crit" : "border-line focus:border-accent",
           className,
         )}
       />
       {error && (
-        <p id={`${id}-err`} className="text-[13px] text-crit">
+        <p id={`${id}-err`} className="text-caption text-crit">
           {error}
         </p>
       )}

@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Field } from "@/components/ui";
+import { Button, Field, Form } from "@/components/ui";
 import { register } from "@/lib/auth";
 import { useAuth } from "./auth-provider";
 
@@ -32,7 +32,7 @@ export function RegisterForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-5">
+    <Form onSubmit={onSubmit}>
       <Field label="email" name="email" type="email" autoComplete="email" required placeholder="you@dev.sh" />
       <Field
         label="password"
@@ -53,6 +53,6 @@ export function RegisterForm() {
       <Button type="submit" disabled={pending}>
         {pending ? "creating account…" : "./register →"}
       </Button>
-    </form>
+    </Form>
   );
 }
