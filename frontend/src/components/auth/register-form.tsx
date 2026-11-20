@@ -4,11 +4,13 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Field, Form } from "@/components/ui";
 import { register } from "@/lib/auth";
+import { useT } from "@/components/i18n/i18n-provider";
 import { useAuth } from "./auth-provider";
 
 export function RegisterForm() {
   const router = useRouter();
   const { setUser } = useAuth();
+  const t = useT();
   const [errors, setErrors] = useState<{ password?: string; form?: string }>({});
   const [pending, setPending] = useState(false);
 
@@ -16,9 +18,9 @@ export function RegisterForm() {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
     const password = String(form.get("password"));
-    if (password.length < 8) return setErrors({ password: "at least 8 characters" });
+    if (password.length < 8) return setErrors({ password: t("error.passwordShort") });
     if (password !== String(form.get("confirm")))
-      return setErrors({ password: "passwords do not match" });
+      return setErrors({ password: t("error.passwordMismatch") });
 
     setPending(true);
     setErrors({});
@@ -28,14 +30,14 @@ export function RegisterForm() {
       setUser(res.user);
       router.push("/roaster");
     }
-    else setErrors({ form: "registration failed: try another email" });
+    else setErrors({ form: t("error.register") });
   }
 
   return (
     <Form onSubmit={onSubmit}>
-      <Field label="email" name="email" type="email" autoComplete="email" required placeholder="you@dev.sh" />
+      <Field label={t("auth.email")} name="email" type="email" autoComplete="email" required placeholder="you@dev.sh" />
       <Field
-        label="password"
+        label={t("auth.password")}
         name="password"
         type="password"
         autoComplete="new-password"
@@ -43,7 +45,7 @@ export function RegisterForm() {
         error={errors.password}
       />
       <Field
-        label="confirm password"
+        label={t("auth.confirm")}
         name="confirm"
         type="password"
         autoComplete="new-password"
@@ -51,7 +53,7 @@ export function RegisterForm() {
         error={errors.form}
       />
       <Button type="submit" disabled={pending}>
-        {pending ? "creating account…" : "./register →"}
+        {pending ? t("auth.registerPending") : t("auth.registerSubmit")}
       </Button>
     </Form>
   );

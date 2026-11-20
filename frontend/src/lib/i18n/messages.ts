@@ -1,0 +1,150 @@
+export const LOCALES = ["en", "ru"] as const;
+export type Locale = (typeof LOCALES)[number];
+export const DEFAULT_LOCALE: Locale = "en";
+
+const en = {
+  "nav.login": "login",
+  "nav.register": "register",
+  "common.or": "or",
+
+  "home.eyebrow": "// ai code review. no mercy. no sugar.",
+  "home.title1": "Your code is bad.",
+  "home.title2": "We'll explain why.",
+  "home.lead":
+    "An AI reviewer with no patience and no filter. Paste your code, take the hit, fix the bugs it found. Brutal about the code, useful about the fix.",
+  "home.cta": "./roast your_code →",
+
+  "login.eyebrow": "// welcome back. your code missed you.",
+  "login.title": "Log in.",
+  "login.footerText": "no account yet?",
+  "login.footerLink": "register",
+  "register.eyebrow": "// toxic to the code. never to you.",
+  "register.title": "Pick your victim.",
+  "register.footerText": "already registered?",
+  "register.footerLink": "log in",
+
+  "auth.github": "continue with github",
+  "auth.email": "email",
+  "auth.password": "password",
+  "auth.confirm": "confirm password",
+  "auth.loginSubmit": "./login →",
+  "auth.loginPending": "authenticating…",
+  "auth.registerSubmit": "./register →",
+  "auth.registerPending": "creating account…",
+  "auth.authenticating": "authenticating",
+  "auth.logout": "$ logout",
+
+  "error.github": "github sign-in failed, try again",
+  "error.oauth_state": "sign-in was interrupted (state mismatch), try again",
+  "error.github_email": "your github account has no verified email: verify one on github and retry",
+  "error.github_conflict": "this email is already linked to a different github account",
+  "error.login": "login failed: check your email and password",
+  "error.passwordShort": "at least 8 characters",
+  "error.passwordMismatch": "passwords do not match",
+  "error.register": "registration failed: try another email",
+
+  "callback.title": "github sign-in failed",
+  "callback.body": "GitHub accepted you, but this browser could not start a session.",
+  "callback.noCookie": "no session cookie was accepted",
+  "callback.back": "back to login",
+  "callback.signingIn": "signing you in",
+
+  "roaster.eyebrow": "// paste. take the hit. fix it.",
+  "roaster.title": "Pick your victim.",
+  "roaster.toxicity": "toxicity",
+  "roaster.tox.mild": "mild",
+  "roaster.tox.medium": "medium",
+  "roaster.tox.nuclear": "nuclear",
+  "roaster.file": "file",
+  "roaster.codeLabel": "code to roast",
+  "roaster.codePlaceholder": "// paste your code here",
+  "roaster.codeUnderReview": "code under review",
+  "roaster.waiting": "waiting for input",
+  "roaster.run": "./roast",
+  "roaster.running": "roasting…",
+  "roaster.edit": "edit code",
+  "roaster.verdict": "verdict: {score}",
+  "roaster.line": "line {line}",
+  "roaster.err.429": "slow down: too many roasts right now, try again in a minute",
+  "roaster.err.503": "the reviewer is offline or not configured (check the LLM settings on the server)",
+  "roaster.err.400": "this input was rejected: max 12000 characters",
+  "roaster.err.other": "the reviewer failed. try again.",
+
+  "locale.label": "language",
+} as const;
+
+export type MessageKey = keyof typeof en;
+export type Messages = Record<MessageKey, string>;
+
+const ru: Messages = {
+  "nav.login": "войти",
+  "nav.register": "регистрация",
+  "common.or": "или",
+
+  "home.eyebrow": "// ai-ревью кода. без жалости. без сахара.",
+  "home.title1": "Твой код — отстой.",
+  "home.title2": "Объясним почему.",
+  "home.lead":
+    "ИИ-ревьюер без терпения и без фильтров. Вставь код, прими удар, исправь найденные баги. Жёстко про код, полезно про исправления.",
+  "home.cta": "./roast твой_код →",
+
+  "login.eyebrow": "// с возвращением. код скучал.",
+  "login.title": "Вход.",
+  "login.footerText": "ещё нет аккаунта?",
+  "login.footerLink": "регистрация",
+  "register.eyebrow": "// токсичны к коду. никогда к тебе.",
+  "register.title": "Выбери жертву.",
+  "register.footerText": "уже зарегистрирован?",
+  "register.footerLink": "войти",
+
+  "auth.github": "продолжить через github",
+  "auth.email": "email",
+  "auth.password": "пароль",
+  "auth.confirm": "повтори пароль",
+  "auth.loginSubmit": "./login →",
+  "auth.loginPending": "проверяем…",
+  "auth.registerSubmit": "./register →",
+  "auth.registerPending": "создаём аккаунт…",
+  "auth.authenticating": "проверяем сессию",
+  "auth.logout": "$ выйти",
+
+  "error.github": "не удалось войти через github, попробуй ещё раз",
+  "error.oauth_state": "вход прерван (не совпал state), попробуй ещё раз",
+  "error.github_email": "в твоём github-аккаунте нет подтверждённого email: подтверди его на github и повтори",
+  "error.github_conflict": "этот email уже привязан к другому github-аккаунту",
+  "error.login": "не удалось войти: проверь email и пароль",
+  "error.passwordShort": "минимум 8 символов",
+  "error.passwordMismatch": "пароли не совпадают",
+  "error.register": "не удалось зарегистрироваться: попробуй другой email",
+
+  "callback.title": "вход через github не удался",
+  "callback.body": "GitHub тебя пустил, но этот браузер не смог начать сессию.",
+  "callback.noCookie": "cookie сессии не принят",
+  "callback.back": "назад ко входу",
+  "callback.signingIn": "входим",
+
+  "roaster.eyebrow": "// вставь. прими удар. исправь.",
+  "roaster.title": "Выбери жертву.",
+  "roaster.toxicity": "токсичность",
+  "roaster.tox.mild": "мягко",
+  "roaster.tox.medium": "средне",
+  "roaster.tox.nuclear": "ядерно",
+  "roaster.file": "файл",
+  "roaster.codeLabel": "код для разбора",
+  "roaster.codePlaceholder": "// вставь сюда свой код",
+  "roaster.codeUnderReview": "код на ревью",
+  "roaster.waiting": "жду код",
+  "roaster.run": "./roast",
+  "roaster.running": "разношу…",
+  "roaster.edit": "править код",
+  "roaster.verdict": "вердикт: {score}",
+  "roaster.line": "строка {line}",
+  "roaster.err.429": "полегче: слишком много запросов, попробуй через минуту",
+  "roaster.err.503": "ревьюер недоступен или не настроен (проверь настройки LLM на сервере)",
+  "roaster.err.400": "ввод отклонён: максимум 12000 символов",
+  "roaster.err.other": "ревьюер упал. попробуй ещё раз.",
+
+  "locale.label": "язык",
+};
+
+export const MESSAGES: Record<Locale, Messages> = { en, ru };

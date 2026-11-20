@@ -2,7 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { Button, Eyebrow, Heading, Loading, Panel, Segmented } from "@/components/ui";
-import { LANGUAGES, roast, roastErrorMessage, TOXICITY, type Language, type RoastResult, type Toxicity } from "@/lib/roast";
+import { useI18n } from "@/components/i18n/i18n-provider";
+import type { MessageKey } from "@/lib/i18n/messages";
+import { roast, roastErrorKey, TOXICITY, type RoastResult, type Toxicity } from "@/lib/roast";
 import { CodePane } from "./code-pane";
 import { Findings } from "./findings";
 
@@ -10,9 +12,9 @@ export function Roaster() {
   const [filename, setFilename] = useState("snippet.js");
   const [code, setCode] = useState("");
   const [toxicity, setToxicity] = useState<Toxicity>("medium");
-  const [language, setLanguage] = useState<Language>("en");
+  const { locale: language, t } = useI18n(); // the interface language is also the language of the roast
   const [result, setResult] = useState<RoastResult>();
-  const [error, setError] = useState<string>();
+  const [error, setError] = useState<MessageKey>();
   const [pending, setPending] = useState(false);
 
   const flagged = useMemo(() => new Set(result?.findings.map((f) => f.line)), [result]);
@@ -23,26 +25,29 @@ export function Roaster() {
     const res = await roast({ code, filename, toxicity, language });
     setPending(false);
     if (res.ok) setResult(res.data as RoastResult);
-    else setError(roastErrorMessage(res.error));
+    else setError(roastErrorKey(res.error));
   }
 
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <Eyebrow>{"// paste. take the hit. fix it."}</Eyebrow>
-          <Heading className="mt-1">Pick your victim.</Heading>
+          <Eyebrow>{t("roaster.eyebrow")}</Eyebrow>
+          <Heading className="mt-1">{t("roaster.title")}</Heading>
         </div>
-        <div className="flex flex-col items-end gap-2">
-          <Segmented label="toxicity" options={TOXICITY} value={toxicity} onChange={setToxicity} />
-          <Segmented label="lang" options={LANGUAGES} value={language} onChange={setLanguage} />
-        </div>
+        <Segmented
+          label={t("roaster.toxicity")}
+          options={TOXICITY}
+          value={toxicity}
+          onChange={setToxicity}
+          format={(o) => t(`roaster.tox.${o}`)}
+        />
       </div>
 
       <Panel>
         <div className="flex flex-wrap items-center gap-3 border-b border-line bg-surface-2 px-4 py-2">
           <label htmlFor="filename" className="text-caption text-muted">
-            file
+            {t("roaster.file")}
           </label>
           <input
             id="filename"
@@ -57,11 +62,11 @@ export function Roaster() {
               <CodePane code={code} flagged={flagged} />
             ) : (
               <textarea
-                aria-label="code to roast"
+                aria-label={t("roaster.codeLabel")}
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 spellCheck={false}
-                placeholder="// paste your code here"
+                placeholder={t("roaster.codePlaceholder")}
                 className="block min-h-72 w-full resize-y bg-transparent p-5 whitespace-pre text-code placeholder:text-dim"
               />
             )}
@@ -74,20 +79,20 @@ export function Roaster() {
               <>
                 <Findings result={result} />
                 <Button variant="ghost" className="self-start" onClick={() => setResult(undefined)}>
-                  edit code
+                  {t("roaster.edit")}
                 </Button>
               </>
             ) : (
               <>
-                <Loading>waiting for input</Loading>
-                {error && <div className="text-crit">{error}</div>}
+                <Loading>{t("roaster.waiting")}</Loading>
+                {error && <div className="text-crit">{t(error)}</div>}
                 <Button
                   variant="outline"
                   className="self-start"
                   onClick={run}
                   disabled={pending || !code.trim()}
                 >
-                  {pending ? "roasting…" : "./roast"}
+                  {pending ? t("roaster.running") : t("roaster.run")}
                 </Button>
               </>
             )}

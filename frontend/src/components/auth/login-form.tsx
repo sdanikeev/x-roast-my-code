@@ -4,19 +4,22 @@ import { useState, useSyncExternalStore, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Field, Form } from "@/components/ui";
 import { login } from "@/lib/auth";
+import { useT } from "@/components/i18n/i18n-provider";
+import type { MessageKey } from "@/lib/i18n/messages";
 import { useAuth } from "./auth-provider";
 
-const OAUTH_ERRORS: Record<string, string> = {
-  github: "github sign-in failed, try again",
-  oauth_state: "sign-in was interrupted (state mismatch), try again",
-  github_email: "your github account has no verified email: verify one on github and retry",
-  github_conflict: "this email is already linked to a different github account",
+const OAUTH_ERRORS: Record<string, MessageKey> = {
+  github: "error.github",
+  oauth_state: "error.oauth_state",
+  github_email: "error.github_email",
+  github_conflict: "error.github_conflict",
 };
 
 export function LoginForm() {
   const router = useRouter();
   const { setUser } = useAuth();
-  const [error, setError] = useState<string>();
+  const t = useT();
+  const [error, setError] = useState<MessageKey>();
   const [pending, setPending] = useState(false);
 
   // ?error=... set by the OAuth callback redirect; server snapshot is null so hydration matches
@@ -26,6 +29,7 @@ export function LoginForm() {
     () => null,
   );
   const shownError = error ?? (redirectError ? OAUTH_ERRORS[redirectError] ?? OAUTH_ERRORS.github : undefined);
+  const errorText = shownError && t(shownError);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -41,22 +45,22 @@ export function LoginForm() {
       setUser(res.user);
       router.push("/roaster");
     }
-    else setError("login failed: check your email and password");
+    else setError("error.login");
   }
 
   return (
     <Form onSubmit={onSubmit}>
-      <Field label="email" name="email" type="email" autoComplete="email" required placeholder="you@dev.sh" />
+      <Field label={t("auth.email")} name="email" type="email" autoComplete="email" required placeholder="you@dev.sh" />
       <Field
-        label="password"
+        label={t("auth.password")}
         name="password"
         type="password"
         autoComplete="current-password"
         required
-        error={shownError}
+        error={errorText}
       />
       <Button type="submit" disabled={pending}>
-        {pending ? "authenticating…" : "./login →"}
+        {pending ? t("auth.loginPending") : t("auth.loginSubmit")}
       </Button>
     </Form>
   );

@@ -6,7 +6,7 @@ import { Roaster } from "@/components/roaster/roaster";
 export default function RoasterPage() {
   return (
     <Page>
-      <PageHeader>
+      <PageHeader className="border-b border-line-soft pb-6">
         <UserMenu />
       </PageHeader>
       <RequireAuth>
